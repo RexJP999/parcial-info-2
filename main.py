@@ -4,11 +4,10 @@ import glob
 from importaciones import *
 import matplotlib.pyplot as plt
 
-
+gestor = GestorArchivos()
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
-
 
 def mostrar_archivos_siata_disponibles():
     #Muestra los archivos CSV disponibles
@@ -36,7 +35,6 @@ def mostrar_menu_principal():
     print("  3. Gestionar archivo")
     print("  4. Salir")
     print("-"*60)
-
 
 def menu_siata():
     #Menú para procesar archivos SIATA
@@ -156,75 +154,28 @@ def menu_siata():
         print(f"✗ Error: {e}")
         input("\nPresione Enter para continuar...")
 
-def mostrar_menu_gestion():
-    print("\n" + "="*60)
-    print(" GESTIÓN DE OBJETOS CARGADOS")
-    print("="*60)
-    print("\n  1. Listar todos los objetos")
-    print("  2. Buscar objetos por nombre")
-    print("  3. Buscar por texto en nombre/ruta")
-    print("  4. Eliminar objeto")
-    print("  5. Ver historial de operaciones")
-    print("  6. Volver al menú principal")
-    print("-"*60)
-
-
 def menu_gestion():
-    gestor = GestorArchivos
     while True:
-        mostrar_menu_gestion()
-        opcion = input("\nSeleccione una opción: ")
+        print("\n--- GESTIÓN ---")
+        print("1. Listar objetos")
+        print("2. Buscar por nombre")
+        print("3. Salir")
 
-        if opcion == '1':
+        op = input("Opción: ")
+
+        if op == '1':
             gestor.listar_todos()
-            input("\nPresione Enter para continuar...")
 
-        elif opcion == '2':
-            nombre = input("\nIngrese el nombre del archivo: ")
-            objetos = gestor.buscar_por_nombre(nombre)
-            if objetos:
-                print("\nObjetos encontrados:")
-                for obj in objetos:
-                    print(f"  [{obj.id}] {obj.nombre_archivo} ({obj.tipo}) - {obj.fecha_carga.strftime('%Y-%m-%d %H:%M')}")
-            else:
-                print("No se encontraron objetos con ese nombre")
-            input("\nPresione Enter para continuar...")
+        elif op == '2':
+            nombre = input("Ingrese nombre: ")
+            gestor.buscar_por_nombre(nombre)
 
-        elif opcion == '3':
-            texto = input("\nIngrese texto a buscar: ")
-            objetos = gestor.buscar_por_texto(texto)
-            if objetos:
-                print(f"\n Objetos encontrados que contienen '{texto}':")
-                for obj in objetos:
-                    print(f"  [{obj.id}] {obj.nombre_archivo} ({obj.tipo})")
-            else:
-                print(f"✗ No se encontraron objetos que contengan '{texto}'")
-            input("\nPresione Enter para continuar...")
-
-        elif opcion == '4':
-            obj_id = input("\nIngrese el ID del objeto a eliminar: ")
-            objeto = gestor.buscar_por_id(obj_id)
-            if objeto:
-                print(f"\nVa a eliminar: {objeto.nombre_archivo} ({objeto.tipo})")
-                confirmar = input(f"¿Está seguro? (s/n): ")
-                if confirmar.lower() == 's':
-                    gestor.eliminar_objeto(obj_id)
-                else:
-                    print("Eliminación cancelada")
-            else:
-                print(f"✗ No existe objeto con ID: {obj_id}")
-            input("\nPresione Enter para continuar...")
-
-        elif opcion == '5':
-            gestor.mostrar_historial()
-            input("\nPresione Enter para continuar...")
-
-        elif opcion == '6':
+        elif op == '3':
             break
 
         else:
-            print(" Opción inválida")
-            input("\nPresione Enter para continuar...")
+            print("Opción inválida")
+
 
 def menu_eeg():
     print("\n" + "-"*50)
@@ -278,6 +229,8 @@ def menu_eeg():
     try:
         eeg = ArchivoEEG(ruta)
         eeg.cargar_archivo()
+
+        gestor.agregar_objeto(eeg)
 
         print("\nLlaves disponibles en el archivo:")
         eeg.mostrar_llaves()
@@ -358,7 +311,6 @@ def main():
         else:
             print("\n✗ Opción inválida")
             input("\nPresione Enter para continuar...")
-
 
 if __name__ == "__main__":
     main()

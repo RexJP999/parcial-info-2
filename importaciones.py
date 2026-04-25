@@ -6,8 +6,6 @@ import os
 from datetime import datetime
 import hashlib
 
-
-
 Carpeta = "Imagenes"
 os.makedirs(Carpeta, exist_ok=True)
 
@@ -497,162 +495,17 @@ class ArchivoSIATA:
 
         return corr_matrix
 
-
-class GestorArchivos:
-    #Clase para gestionar todos los objetos cargados. Permite almacenar, buscar y recuperar objetos
-    _instance = None
-
-    def __new__(cls):
-        #Implementa patrón Singleton para tener una única instancia del gestor
-        if cls._instance is None:
-            cls._instance = super(GestorArchivos, cls).__new__(cls)
-            cls._instance.inicializar()
-        return cls._instance
-
-    def inicializar(self):
-        #Inicializa el gestor con estructuras de datos vacías
-        self.objetos = {}  # Diccionario: id - objeto
-        self.indice_nombre = {}  # Diccionario: nombre - lista de ids
-        self.indice_tipo = {}  # Diccionario: tipo - lista de ids
-        self.historial = []  # Lista de operaciones realizadas
-
-    def agregar_objeto(self, objeto):
-        #Agrega un objeto al gestor
-        obj_id = objeto.id
-
-        # Almacenar en diccionario principal
-        self.objetos[obj_id] = objeto
-
-        # Actualizar índice por nombre
-        if objeto.nombre_archivo not in self.indice_nombre:
-            self.indice_nombre[objeto.nombre_archivo] = []
-        self.indice_nombre[objeto.nombre_archivo].append(obj_id)
-
-        # Actualizar índice por tipo
-        if objeto.tipo not in self.indice_tipo:
-            self.indice_tipo[objeto.tipo] = []
-        self.indice_tipo[objeto.tipo].append(obj_id)
-
-        # Registrar en historial
-        self.registrar_operacion(f"CARGAR", f"{objeto.tipo}: {objeto.nombre_archivo} (ID: {obj_id})")
-
-        print(f"\nObjeto almacenado en el gestor con ID: {obj_id}")
-
-    def registrar_operacion(self, operacion, descripcion):
-        #Registra una operación en el historial
-        self.historial.append({
-            'timestamp': datetime.now(),
-            'operacion': operacion,
-            'descripcion': descripcion
-        })
-
-
-    def buscar_por_nombre(self, nombre):
-        #Busca objetos por nombre de archivo
-        if nombre in self.indice_nombre:
-            ids = self.indice_nombre[nombre]
-            objetos_encontrados = [self.objetos[oid] for oid in ids]
-            print(f"Encontrados {len(objetos_encontrados)} objeto(s) con nombre '{nombre}'")
-            return objetos_encontrados
-        else:
-            print(f"No se encontraron objetos con nombre: {nombre}")
-            return []
-
-
-
-    def buscar_por_texto(self, texto):
-        #Búsqueda por texto en nombre o ruta
-        texto_lower = texto.lower()
-        resultados = []
-
-        for obj_id, objeto in self.objetos.items():
-            if (texto_lower in objeto.nombre_archivo.lower() or
-                texto_lower in objeto.ruta.lower()):
-                resultados.append(objeto)
-
-        print(f"Encontrados {len(resultados)} objeto(s) que contienen '{texto}'")
-        return resultados
-
-
-    def listar_todos(self):
-        #Lista todos los objetos almacenados
-        if not self.objetos:
-            print("\n No hay objetos almacenados en el gestor")
-            return
-
-        print("\n" + "="*80)
-        print(" LISTADO DE OBJETOS ALMACENADOS")
-        print("="*80)
-
-        print(f"\nSIATA ({len(self.buscar_por_tipo('SIATA'))} objetos):")
-        for obj_id, objeto in self.objetos.items():
-            if objeto.tipo == "SIATA":
-                print(f"    [{obj_id}] {objeto.nombre_archivo} - {objeto.fecha_carga.strftime('%Y-%m-%d %H:%M')}")
-
-        print(f"\nEEG ({len(self.buscar_por_tipo('EEG'))} objetos):")
-        for obj_id, objeto in self.objetos.items():
-            if objeto.tipo == "EEG":
-                print(f"    [{obj_id}] {objeto.nombre_archivo} - {objeto.fecha_carga.strftime('%Y-%m-%d %H:%M')}")
-
-    def mostrar_historial(self):
-        #Muestra el historial de operaciones
-        if not self.historial:
-            print("\nNo hay operaciones registradas")
-            return
-
-        print("\n" + "="*80)
-        print("HISTORIAL DE OPERACIONES")
-        print("="*80)
-
-        for i, op in enumerate(self.historial, 1):
-            print(f"{i}. [{op['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}] {op['operacion']}: {op['descripcion']}")
-
-    def eliminar_objeto(self, obj_id):
-        #Elimina un objeto del gestor
-        if obj_id not in self.objetos:
-            print(f" No se encontró objeto con ID: {obj_id}")
-            return False
-
-        objeto = self.objetos[obj_id]
-
-        # Eliminar de índices
-        self.indice_nombre[objeto.nombre_archivo].remove(obj_id)
-        if not self.indice_nombre[objeto.nombre_archivo]:
-            del self.indice_nombre[objeto.nombre_archivo]
-
-        self.indice_tipo[objeto.tipo].remove(obj_id)
-        if not self.indice_tipo[objeto.tipo]:
-            del self.indice_tipo[objeto.tipo]
-
-        # Eliminar del diccionario principal
-        del self.objetos[obj_id]
-
-        self.registrar_operacion("ELIMINAR", f"{objeto.tipo}: {objeto.nombre_archivo} (ID: {obj_id})")
-        print(f"Objeto {obj_id} eliminado del gestor")
-
-        return True
-
-    def obtener_estadisticas(self):
-        #Obtiene estadísticas del gestor
-        stats = {
-            'total_objetos': len(self.objetos),
-            'por_tipo': {
-                'SIATA': len(self.buscar_por_tipo('SIATA')),
-                'EEG': len(self.buscar_por_tipo('EEG'))
-            },
-            'total_operaciones': len(self.historial),
-            'ultima_operacion': self.historial[-1] if self.historial else None
-        }
-        return stats
-
-
-
 class ArchivoEEG:
     def __init__(self,ruta):
         self.__ruta = ruta
         self.__data = None
         self.__matriz = None
         self.__key = None
+        self.id = os.path.basename(ruta)
+        self.nombre_archivo = os.path.basename(ruta)
+        self.tipo = "EEG"
+        self.ruta = ruta
+        self.fecha_carga = datetime.now()
 
 
     def cargar_archivo(self):
@@ -739,7 +592,7 @@ class ArchivoEEG:
         axs[1].set_xlabel("Tiempo (s)")
         axs[1].set_ylabel("Amplitud (µV)")
 
-        nombre = f"eeg_suma_{self.__key}.png"
+        nombre = f"eeg_suma_{self.__key}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
 
         plt.tight_layout()
         plt.savefig(os.path.join("Imagenes", nombre))
@@ -782,6 +635,45 @@ class ArchivoEEG:
         axs[1].legend(["Desviacion estandar"])
 
         plt.tight_layout()
-        nombre = f"eeg_stats_{self.__key}.png"
+        nombre = f"eeg_stats_{self.__key}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         plt.savefig(os.path.join("Imagenes", nombre))
         plt.show()
+
+class GestorArchivos:
+
+    def __init__(self):
+        self.objetos = {}
+
+    def agregar_objeto(self, objeto):
+        self.objetos[objeto.id] = objeto
+        print(f"Objeto guardado: {objeto.id}")
+
+    def listar_todos(self):
+        if not self.objetos:
+            print("No hay objetos guardados")
+            return
+
+        print("\nObjetos guardados:")
+        for obj in self.objetos.values():
+            print(f"- {obj.id} ({obj.tipo})")
+
+    def buscar_por_nombre(self, nombre):
+        encontrados = []
+        for obj in self.objetos.values():
+            if nombre.lower() in obj.nombre_archivo.lower():
+                encontrados.append(obj)
+    
+    def buscar_por_tipo(self, tipo):
+        resultados = []
+
+        for obj in self.objetos.values():
+            if obj.tipo == tipo:
+                resultados.append(obj)
+
+        return resultados
+
+        if encontrados:
+            for obj in encontrados:
+                print(f"- {obj.id} ({obj.tipo})")
+        else:
+            print("No se encontraron resultados")
