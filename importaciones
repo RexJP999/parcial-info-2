@@ -3,3 +3,110 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat, whosmat
 import os
+
+Carpeta = "Imagenes"
+os.makedirs(Carpeta, exist_ok=True)
+
+def listar_archivos(carpeta):
+    ruta = os.path.join("data", carpeta)
+
+    if not os.path.exists(ruta):
+        print("La carpeta no existe")
+        return []
+
+    archivos = [f for f in os.listdir(ruta) if f.endswith(".mat")]
+    return archivos
+
+def seleccionar_archivo(carpeta):
+    archivos = listar_archivos(carpeta)
+
+    if not archivos:
+        print("No hay archivos disponibles")
+        return None
+
+    print(f"\nArchivos en {carpeta}:")
+
+    for i, f in enumerate(archivos):
+        codigo = f.split("_")[0] 
+        print(f"{i+1}. {codigo}")
+
+    try:
+        op = int(input("Seleccione archivo: "))
+        return os.path.join("data", carpeta, archivos[op])
+    except:
+        print("Opción inválida")
+        return None
+    
+class EEG:
+    def __init__(self,ruta):
+        self.__ruta = ruta
+        self.__data = None
+        self.__matriz = None
+        self.__key = None
+
+    def cargar_archivo(self):
+        self.__data = loadmat(self.__ruta)
+
+    def mostrar_llaves(self):
+        print(whosmat(self.__ruta))
+
+    def set_key(self, key):
+        if key not in self.__data:
+            raise ValueError("No se encontro la variable en el .mat")
+        self.__key = key
+        self.__matriz = self.__data[key]
+
+    def __obtener_matriz_2D(self):
+        if self.__matriz is None:
+            raise ValueError("No hay matriz cargada")
+
+        matriz = np.squeeze(self.__matriz)
+
+        print("Shape original:", matriz.shape)
+
+        if matriz.ndim == 3:
+            matriz = np.mean(matriz, axis=2)
+
+        elif matriz.ndim != 2:
+            raise ValueError("Dimensión no soportada")
+
+        print("Shape para análisis:", matriz.shape)
+
+        return matriz
+    
+    def sumar_canales(self, canales, inicio, fin):
+
+        matriz = self.__obtener_matriz_2D()
+
+        
+        if len(canales) != 3:
+            raise ValueError("Debe seleccionar exactamente 3 canales")
+
+        if max(canales) >= matriz.shape[0]:
+            raise ValueError("Canal fuera de rango")
+
+        if inicio < 0 or fin > matriz.shape[1] or inicio >= fin:
+            raise ValueError("Rango inválido")
+
+        tiempo = np.linspace(0, (fin - inicio) / 1000, fin - inicio)
+
+        suma = np.sum(matriz[canales, inicio:fin], axis=0)
+
+        fig, axs = plt.subplots(2, 1, figsize=(10, 8))
+
+        for c in canales:
+            axs[0].plot(tiempo, matriz[c, inicio:fin], label=f"Canal {c}")
+
+        axs[0].set_title("Canales EEG")
+        axs[0].set_xlabel("Tiempo (s)")
+        axs[0].set_ylabel("Amplitud (µV)")
+        axs[0].legend()
+
+        axs[1].plot(tiempo, suma)
+        axs[1].set_title("Suma de canales")
+        axs[1].set_xlabel("Tiempo (s)")
+        axs[1].set_ylabel("Amplitud (µV)")
+
+        plt.tight_layout()
+        plt.savefig("Imagenes/eeg_suma.png")
+        plt.show()
