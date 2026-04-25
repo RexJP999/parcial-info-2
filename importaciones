@@ -121,3 +121,41 @@ class EEG:
         plt.savefig(os.path.join("Imagenes", nombre))
         plt.show()
 
+    def estadisticas(self):
+        if self.__matriz is None:
+            raise ValueError("No hay ninguna matriz cargada")
+        
+        matriz = np.squeeze(self.__matriz)
+        print("Forma orignal de la matriz:", matriz.shape)
+
+        if matriz.ndim == 3:
+            promedio = np.mean(matriz, axis=2)
+            std = np.std(matriz, axis=2)
+
+            promedio_plot = promedio[0]
+            std_plot = std[0]
+
+        elif matriz.ndim == 2:
+            promedio = np.mean(matriz, axis=0)
+            std = np.std(matriz, axis=0)
+
+        else:
+            raise ValueError("Dimension no soportada")
+        
+        fig, axs = plt.subplots(2,1, figsize=(10, 8))
+        axs[0].stem(promedio_plot) 
+        axs[0].set_title("Promedio")
+        axs[0].set_xlabel("Muestras")
+        axs[0].set_ylabel("Amplitud (µV)")
+
+        axs[1].stem(std_plot)
+        axs[1].set_title("Desviación estándar")
+        axs[1].set_xlabel("Muestras")
+        axs[1].set_ylabel("Amplitud (µV)")
+
+        plt.tight_layout()
+        nombre = f"eeg_stats_{self.__key}.png"
+        plt.savefig(os.path.join("Imagenes", nombre))
+        plt.show()
+        
+
