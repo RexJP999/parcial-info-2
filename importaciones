@@ -37,7 +37,7 @@ def seleccionar_archivo(carpeta):
         print("Opción inválida")
         return None
     
-class EEG:
+class ArchivoEEG:
     def __init__(self,ruta):
         self.__ruta = ruta
         self.__data = None
@@ -129,15 +129,17 @@ class EEG:
         print("Forma orignal de la matriz:", matriz.shape)
 
         if matriz.ndim == 3:
+            # La matriz tiene forma (canales, muestras, ensayos)
+            # Se calcula el promedio y desviación estándar sobre los ensayos (axis=2)
             promedio = np.mean(matriz, axis=2)
             std = np.std(matriz, axis=2)
-
-            promedio_plot = promedio[0]
-            std_plot = std[0]
+            # Posteriormente promediamos entre canales para obtener una señal global
+            promedio_plot = np.mean(promedio, axis = 0)
+            std_plot = np.mean(std, axis = 0)
 
         elif matriz.ndim == 2:
-            promedio = np.mean(matriz, axis=0)
-            std = np.std(matriz, axis=0)
+            promedio_plot = np.mean(matriz, axis=0)
+            std_plot = np.std(matriz, axis=0)
 
         else:
             raise ValueError("Dimension no soportada")
@@ -147,11 +149,13 @@ class EEG:
         axs[0].set_title("Promedio")
         axs[0].set_xlabel("Muestras")
         axs[0].set_ylabel("Amplitud (µV)")
+        axs[0].legend(["Promedio"])
 
         axs[1].stem(std_plot)
         axs[1].set_title("Desviación estándar")
         axs[1].set_xlabel("Muestras")
         axs[1].set_ylabel("Amplitud (µV)")
+        axs[1].legend(["Desviacion estandar"])
 
         plt.tight_layout()
         nombre = f"eeg_stats_{self.__key}.png"
