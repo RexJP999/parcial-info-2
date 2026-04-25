@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime as dt
 from scipy.io import loadmat, whosmat
 import os
 
@@ -43,6 +44,7 @@ class ArchivoEEG:
         self.__data = None
         self.__matriz = None
         self.__key = None
+       
 
     def cargar_archivo(self):
         self.__data = loadmat(self.__ruta)
@@ -61,20 +63,33 @@ class ArchivoEEG:
             raise ValueError("Primero cargue el archivo")
         return [k for k in self.__data.keys() if not k.startswith("__")]
 
-
     def __obtener_matriz_2D(self):
         if self.__matriz is None:
             raise ValueError("No hay matriz cargada")
 
         matriz = np.squeeze(self.__matriz)
-
-        print("Shape original:", matriz.shape)
+        shape = matriz.shape
 
         if matriz.ndim == 3:
+            canales, muestras, ensayos = shape
+            duracion = muestras/ 1000
+
+            print("La matriz tiene:")
+            print(f"Canales: {canales}")
+            print(f"Muestras (tiempo): {muestras} -> Duracion: {duracion:.2f} s")
+            print(f"Ensayos: {ensayos}")
             matriz = np.mean(matriz, axis=2)
 
-        elif matriz.ndim != 2:
-            raise ValueError("Dimensión no soportada")
+        elif matriz.ndim == 2:
+            canales, muestras = shape
+            duracion = muestras / 1000
+
+            print(f"Canales: {canales}")
+            print(f"Muestras (tiempo): {muestras} → Duración: {duracion:.2f} s")
+            print("Ensayos: 1")
+        
+        else:
+            raise ValueError("Dimension no soportada")
 
         print("Shape para análisis:", matriz.shape)
 
